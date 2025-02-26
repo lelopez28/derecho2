@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}Inicio{% endblock %}
+{% block content %}
+<!-- Banner chulo -->
+<header class="py-4 text-white text-center position-relative overflow-hidden" style="background: linear-gradient(135deg, #003087 0%, #0055a4 50%, #CE1126 100%);">
+    <div class="container position-relative z-1">
+        <h1 class="display-3 fw-bold mb-2 animate__animated animate__fadeInDown" style="text-shadow: 3px 3px 6px rgba(0,0,0,0.7);">
+            <i class="fas fa-balance-scale me-2"></i>Juego de Litigios
+        </h1>
+        <p class="fs-5 fw-bold mb-3 animate__animated animate__fadeInUp" style="color: #fff; text-shadow: 1px 1px 3px rgba(0,0,0,0.5);">
+            Bienvenido, {{ user_info.real_name }} ({{ user_info.rank }}) - Puntos: {{ user_info.points }}
+        </p>
+        <p class="lead mb-3 animate__animated animate__fadeIn" style="color: #f8f9fa;">
+            Seleccione una materia legal para resolver casos prácticos
+        </p>
+        <button type="button" class="btn btn-light btn-lg shadow-sm animate__animated animate__pulse animate__infinite" data-bs-toggle="modal" data-bs-target="#reglasModal" style="background: #fff; color: #003087; border: 2px solid #CE1126;">
+            <i class="fas fa-book-open me-2"></i>Reglas del Juego
+        </button>
+    </div>
+    <!-- Fondo decorativo -->
+    <div class="position-absolute top-0 start-0 w-100 h-100 opacity-10" style="background: url('https://www.transparenttextures.com/patterns/wood-pattern.png');"></div>
+</header>
+
+<!-- Contenido principal -->
+<div class="container my-5">
+    <div class="row">
+        <!-- Derecho Penal -->
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-gavel fa-3x mb-3 text-danger"></i>
+                    <h5 class="card-title">Derecho Penal</h5>
+                    <p class="card-text">Resuelva casos relacionados con delitos y sanciones penales.</p>
+                    <a href="{{ url_for('penal') }}" class="btn btn-primary">Resolver Casos</a>
+                </div>
+            </div>
+        </div>
+        <!-- Derecho Civil -->
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-balance-scale fa-3x mb-3 text-primary"></i>
+                    <h5 class="card-title">Derecho Civil</h5>
+                    <p class="card-text">Resuelva casos sobre contratos, propiedad y obligaciones.</p>
+                    <a href="{{ url_for('civil') }}" class="btn btn-primary">Resolver Casos</a>
+                </div>
+            </div>
+        </div>
+        <!-- Tribunal de Tierras -->
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-home fa-3x mb-3 text-success"></i>
+                    <h5 class="card-title">Tribunal de Tierras</h5>
+                    <p class="card-text">Resuelva casos sobre bienes inmuebles y terrenos.</p>
+                    <a href="{{ url_for('tierras') }}" class="btn btn-primary">Resolver Casos</a>
+                </div>
+            </div>
+        </div>
+        <!-- Tribunal Superior Administrativo -->
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-building fa-3x mb-3 text-warning"></i>
+                    <h5 class="card-title">Tribunal Superior Administrativo</h5>
+                    <p class="card-text">Resuelva casos de actos administrativos y recursos.</p>
+                    <a href="{{ url_for('administrativo') }}" class="btn btn-primary">Resolver Casos</a>
+                </div>
+            </div>
+        </div>
+        <!-- Tribunal de Familia -->
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-users fa-3x mb-3 text-info"></i>
+                    <h5 class="card-title">Tribunal de Familia</h5>
+                    <p class="card-text">Resuelva casos sobre disputas familiares y derechos personales.</p>
+                    <a href="{{ url_for('familia') }}" class="btn btn-primary">Resolver Casos</a>
+                </div>
+            </div>
+        </div>
+        <!-- Tribunal de Niños, Niñas y Adolescentes -->
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-child fa-3x mb-3 text-secondary"></i>
+                    <h5 class="card-title">Tribunal de Niños, Niñas y Adolescentes</h5>
+                    <p class="card-text">Resuelva casos de menores y protección legal.</p>
+                    <a href="{{ url_for('ninos') }}" class="btn btn-primary">Resolver Casos</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Reglas -->
+<div class="modal fade" id="reglasModal" tabindex="-1" aria-labelledby="reglasModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="reglasModalLabel">Reglas del Juego de Litigios</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h6>Objetivo</h6>
+                <p>El objetivo es resolver casos legales ficticios presentando un alegato sólido como Fiscal o Abogado Defensor, basado en las pruebas, testigos y leyes aplicables.</p>
+                <h6>Cómo Jugar</h6>
+                <ol>
+                    <li>Seleccione una materia legal en la página principal.</li>
+                    <li>Elija un caso de la lista disponible.</li>
+                    <li>Revise los hechos, pruebas, testigos, ley aplicable y procedimiento proporcionados.</li>
+                    <li>Elija su función: Fiscal (acusar) o Abogado Defensor (defender).</li>
+                    <li>Formule su alegato en el campo de texto, citando leyes, utilizando pruebas o testigos y explicando su posición.</li>
+                    <li>Envíe su alegato para recibir la evaluación del juez.</li>
+                </ol>
+                <!-- Resto del modal igual -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

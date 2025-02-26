@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Derecho Civil{% endblock %}
+{% block content %}
+<header class="py-4 text-white text-center position-relative overflow-hidden" style="background: linear-gradient(135deg, #003087 0%, #0055a4 50%, #CE1126 100%);">
+    <div class="container position-relative z-1">
+        <h1 class="display-3 fw-bold mb-2 animate__animated animate__fadeInDown" style="text-shadow: 3px 3px 6px rgba(0,0,0,0.7);">
+            <i class="fas fa-balance-scale me-2"></i>Derecho Civil
+        </h1>
+        <p class="fs-5 fw-bold mb-3 animate__animated animate__fadeInUp" style="color: #fff; text-shadow: 1px 1px 3px rgba(0,0,0,0.5);">
+            Bienvenido, {{ user_info.real_name }} ({{ user_info.rank }}) - Puntos: {{ user_info.points }}
+        </p>
+        <p class="lead mb-3 animate__animated animate__fadeIn" style="color: #f8f9fa;">
+            Resuelva casos sobre contratos, propiedad y obligaciones
+        </p>
+        <button type="button" class="btn btn-light btn-lg shadow-sm animate__animated animate__pulse animate__infinite" data-bs-toggle="modal" data-bs-target="#reglasModal" style="background: #fff; color: #003087; border: 2px solid #CE1126;">
+            <i class="fas fa-book-open me-2"></i>Reglas del Juego
+        </button>
+    </div>
+    <div class="position-absolute top-0 start-0 w-100 h-100 opacity-10" style="background: url('https://www.transparenttextures.com/patterns/wood-pattern.png');"></div>
+</header>
+
+<div class="container my-3">
+    <div class="row">
+        {% for caso in casos %}
+        <div class="col-md-4 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-balance-scale me-2 text-primary"></i>{{ caso.titulo }}
+                    </h5>
+                    <p class="card-text">{{ caso.hechos[:100] }}...</p>
+                    <p class="card-text">
+                        {% if caso.dificultad <= 4 %}
+                        <span class="badge bg-success">Dificultad: Baja-Media ({{ caso.dificultad }}/10)</span>
+                        {% elif caso.dificultad <= 6 %}
+                        <span class="badge bg-warning">Dificultad: Media ({{ caso.dificultad }}/10)</span>
+                        {% else %}
+                        <span class="badge bg-danger">Dificultad: Alta ({{ caso.dificultad }}/10)</span>
+                        {% endif %}
+                    </p>
+                    <a href="{{ url_for('caso', tabla='casos_civil', caso_id=caso.id) }}" class="btn btn-primary btn-lg">Resolver Caso</a>
+                    <a href="{{ url_for('caso_multi', tabla='casos_civil', caso_id=caso.id) }}" class="btn btn-warning btn-sm mt-2">Multijugador</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="text-center mt-4">
+        <a href="{{ url_for('inicio') }}" class="btn btn-secondary">Volver a Materias</a>
+    </div>
+</div>
+
+<!-- Modal de Reglas -->
+<div class="modal fade" id="reglasModal" tabindex="-1" aria-labelledby="reglasModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="reglasModalLabel">Reglas del Juego de Litigios</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h6>Objetivo</h6>
+                <p>El objetivo es resolver casos legales ficticios presentando un alegato sólido como Demandante o Demandado, basado en las pruebas, testigos y leyes aplicables.</p>
+                <!-- Resto del modal -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

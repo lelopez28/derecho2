@@ -1,0 +1,32 @@
+body {
+    font-family: 'Arial', sans-serif;
+    background: url('https://www.transparenttextures.com/patterns/paper-fibers.png') repeat;
+    background-color: #f8f9fa;
+}
+.card {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    border-radius: 10px;
+    transition: transform 0.3s;
+    border: 1px solid #d3c8a0;
+    background-color: #fffef0;
+}
+.card:hover {
+    transform: translateY(-5px);
+}
+.btn-primary {
+    transition: all 0.3s;
+    background-color: #003087;
+    border-color: #003087;
+}
+.btn-primary:hover {
+    transform: scale(1.05);
+    background-color: #CE1126;
+    border-color: #CE1126;
+}
+.navbar-dark {
+    background: linear-gradient(90deg, #003087, #CE1126);
+}
+.form-control:focus {
+    border-color: #CE1126;
+    box-shadow: 0 0 0 0.2rem rgba(206, 17, 38, 0.25);
+}

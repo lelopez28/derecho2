@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block title %}{{ caso.titulo }} - Multijugador{% endblock %}
+{% block content %}
+<header class="py-3 text-white text-center position-relative overflow-hidden" style="background: linear-gradient(135deg, #003087 0%, #0055a4 50%, #CE1126 100%);">
+    <div class="container position-relative z-1">
+        <h1 class="fw-bold fs-3 mb-1" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">
+            <i class="fas fa-gavel me-2"></i>{{ caso.titulo }} - Multijugador
+        </h1>
+        <p class="fs-6 mb-0">Enfréntate a otro jugador en este caso</p>
+    </div>
+    <div class="position-absolute top-0 start-0 w-100 h-100 opacity-10" style="background: url('https://www.transparenttextures.com/patterns/wood-pattern.png');"></div>
+</header>
+
+<div class="container my-3">
+    <div class="row g-3">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 h-100" style="background: #f8f9fa;">
+                <div class="card-body p-3">
+                    <div class="row g-2">
+                        <div class="col-12">
+                            <h5 class="text-primary fw-bold mb-1 fs-6"><i class="fas fa-file-alt me-1"></i>Hechos</h5>
+                            <p class="text-dark mb-0 fs-6" style="line-height: 1.2;">{{ caso.hechos }}</p>
+                        </div>
+                        <div class="col-6">
+                            <h5 class="text-danger fw-bold mb-1 fs-6"><i class="fas fa-evidence me-1"></i>Pruebas</h5>
+                            <ul class="list-group list-group-flush fs-6">
+                                {% for prueba, peso in caso.pruebas.items() %}
+                                <li class="list-group-item p-1 d-flex justify-content-between">
+                                    <span>{{ prueba }}</span>
+                                    <span class="badge bg-danger rounded-pill">{{ peso }}</span>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div class="col-6">
+                            <h5 class="text-success fw-bold mb-1 fs-6"><i class="fas fa-users me-1"></i>Testigos</h5>
+                            <ul class="list-group list-group-flush fs-6">
+                                {% for testigo, peso in caso.testigos.items() %}
+                                <li class="list-group-item p-1 d-flex justify-content-between">
+                                    <span>{{ testigo }}</span>
+                                    <span class="badge bg-success rounded-pill">{{ peso }}</span>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div class="col-12">
+                            <h5 class="text-primary fw-bold mb-1 fs-6"><i class="fas fa-shield-alt me-1"></i>Defensa</h5>
+                            <p class="text-dark mb-0 fs-6" style="line-height: 1.2;">{{ caso.defensa }}</p>
+                        </div>
+                        <div class="col-6">
+                            <h5 class="text-warning fw-bold mb-1 fs-6"><i class="fas fa-book me-1"></i>Ley</h5>
+                            <p class="text-dark mb-0 fs-6" style="line-height: 1.2;">{{ caso.ley }}</p>
+                        </div>
+                        <div class="col-6">
+                            <h5 class="text-info fw-bold mb-1 fs-6"><i class="fas fa-cogs me-1"></i>Procedimiento</h5>
+                            <p class="text-dark mb-0 fs-6" style="line-height: 1.2;">{{ caso.procedimiento }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body p-3">
+                    {% if resultado %}
+                    <div class="alert alert-info h-100 d-flex flex-column justify-content-center p-3" role="alert">
+                        <h4 class="alert-heading fw-bold text-info fs-5 mb-2">
+                            <i class="fas fa-check-circle me-2"></i>Resultado
+                        </h4>
+                        <p class="fs-6 mb-0" style="white-space: pre-wrap;">{{ resultado | safe }}</p>
+                    </div>
+                    {% else %}
+                    <h3 class="text-center fw-bold mb-3 text-primary fs-5">
+                        <i class="fas fa-pen-alt me-2"></i>Presenta tu Alegato
+                    </h3>
+                    <p class="text-center text-muted fs-6">
+                        {% if fiscal_id and defensor_id %}
+                        Ambos roles ocupados, esperando evaluación...
+                        {% elif fiscal_id %}
+                        Esperando {{ rol2 }}...
+                        {% elif defensor_id %}
+                        Esperando {{ rol1 }}...
+                        {% else %}
+                        Elige tu rol y espera a un oponente
+                        {% endif %}
+                    </p>
+                    <form method="POST">
+                        <input type="hidden" name="juicio_id" value="{{ juicio_id }}">
+                        <div class="mb-3">
+                            <label for="rol" class="form-label fw-bold text-dark fs-6">Rol</label>
+                            <select name="rol" id="rol" class="form-select shadow-sm" required>
+                                {% if not fiscal_id %}
+                                <option value="{{ rol1 }}">{{ rol1 }}</option>
+                                {% elif not defensor_id %}
+                                <option value="{{ rol2 }}">{{ rol2 }}</option>
+                                {% endif %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="argumento" class="form-label fw-bold text-dark fs-6">Alegato</label>
+                            <textarea name="argumento" id="argumento" class="form-control shadow-sm" rows="5" required placeholder="Escribe tu alegato aquí..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 shadow-sm" style="background: #CE1126; border: none; transition: background 0.3s;">
+                            <i class="fas fa-paper-plane me-2"></i>Enviar Alegato
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center mt-3">
+        <a href="{{ url_for(endpoint) }}" class="btn btn-outline-secondary shadow-sm" style="border-color: #003087; color: #003087; transition: all 0.3s;">
+            <i class="fas fa-arrow-left me-2"></i>Volver a Casos
+        </a>
+    </div>
+</div>
+
+<style>
+    .btn-outline-secondary:hover { background-color: #003087; color: white; }
+    .btn-primary:hover { background-color: #a50e1e !important; }
+    .card-body { padding: 1rem !important; }
+    .list-group-item { padding: 0.25rem 0.5rem !important; }
+</style>
+{% endblock %}

@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}Perfil de {{ user_info.real_name }}{% endblock %}
+{% block content %}
+<!-- Banner chulo -->
+<header class="py-4 text-white text-center position-relative overflow-hidden" style="background: linear-gradient(135deg, #003087 0%, #0055a4 50%, #CE1126 100%);">
+    <div class="container position-relative z-1">
+        <h1 class="display-3 fw-bold mb-2 animate__animated animate__fadeInDown" style="text-shadow: 3px 3px 6px rgba(0,0,0,0.7);">
+            <i class="fas fa-user me-2"></i>Perfil de {{ user_info.real_name }}
+        </h1>
+        <p class="fs-5 fw-bold mb-3 animate__animated animate__fadeInUp" style="color: #fff; text-shadow: 1px 1px 3px rgba(0,0,0,0.5);">
+            {{ user_info.rank }} - Puntos Totales: {{ user_info.points }}
+        </p>
+    </div>
+    <div class="position-absolute top-0 start-0 w-100 h-100 opacity-10" style="background: url('https://www.transparenttextures.com/patterns/wood-pattern.png');"></div>
+</header>
+
+<!-- Contenido principal -->
+<div class="container my-5">
+    <div class="row g-4">
+        <!-- Estadísticas generales -->
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 text-center">
+                <div class="card-body">
+                    <h3 class="text-primary fw-bold mb-3">
+                        <i class="fas fa-chart-bar me-2"></i>Estadísticas
+                    </h3>
+                    <p class="fs-5"><strong>Casos Resueltos:</strong> {{ total_casos }}</p>
+                    <p class="fs-5"><strong>Puntaje Promedio:</strong> {{ promedio_puntos }}/100</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ranking -->
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h3 class="text-success fw-bold mb-3 text-center">
+                        <i class="fas fa-trophy me-2"></i>Ranking
+                    </h3>
+                    <table class="table table-striped fs-6">
+                        <thead>
+                            <tr>
+                                <th>Posición</th>
+                                <th>Nombre</th>
+                                <th>Puntos</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for jugador in ranking %}
+                            <tr {% if jugador.id == session.user_id %}class="table-primary"{% endif %}>
+                                <td>{{ loop.index }}</td>
+                                <td>{{ jugador.real_name }}</td>
+                                <td>{{ jugador.points }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Casos resueltos -->
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h3 class="text-danger fw-bold mb-3 text-center">
+                        <i class="fas fa-list me-2"></i>Casos Resueltos
+                    </h3>
+                    {% if casos_resueltos %}
+                    <div style="max-height: 300px; overflow-y: auto;">
+                        <table class="table table-striped fs-6">
+                            <thead>
+                                <tr>
+                                    <th>Materia</th>
+                                    <th>Caso</th>
+                                    <th>Rol</th>
+                                    <th>Puntos</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for caso in casos_resueltos %}
+                                <tr>
+                                    <td>{{ caso.tabla.split('_')[1].capitalize() }}</td>
+                                    <td>{{ caso.titulo }}</td>
+                                    <td>{{ caso.rol }}</td>
+                                    <td>{{ caso.puntos }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-center text-muted">Aún no has resuelto casos.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botón volver -->
+    <div class="text-center mt-4">
+        <a href="{{ url_for('inicio') }}" class="btn btn-outline-secondary shadow-sm" style="border-color: #003087; color: #003087; transition: all 0.3s;">
+            <i class="fas fa-arrow-left me-2"></i>Volver a Inicio
+        </a>
+    </div>
+</div>
+
+<style>
+    .btn-outline-secondary:hover {
+        background-color: #003087;
+        color: white;
+    }
+</style>
+{% endblock %}

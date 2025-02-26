@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Perfil{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-lg">
+            <div class="card-body text-center">
+                <h2 class="mb-4">Perfil de {{ real_name }}</h2>
+                <img src="{{ url_for('static', filename='uploads/' + photo_path) if photo_path else url_for('static', filename='default_avatar.png') }}" alt="Foto" class="rounded-circle mb-3" style="width: 150px; height: 150px;">
+                <p>Puntos: {{ points }} | Rango: {{ 'Principiante' if points <= 50 else 'Medio' if points <= 150 else 'Pro' }}</p>
+                <form method="POST" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="photo" class="form-label">Subir Foto</label>
+                        <input type="file" name="photo" id="photo" class="form-control" accept="image/*">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Actualizar Foto</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

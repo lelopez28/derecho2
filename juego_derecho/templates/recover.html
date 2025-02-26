@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Recuperar Contraseña{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-lg animate__animated animate__zoomIn" style="background: linear-gradient(135deg, #003087, #CE1126); color: white;">
+            <div class="card-body text-center p-5">
+                {% if reset %}
+                <h1 class="mb-4 fw-bold" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">Restablecer Contraseña</h1>
+                <form method="POST">
+                    <div class="mb-3">
+                        <input type="text" name="code" class="form-control form-control-lg rounded-pill" placeholder="Código de Recuperación" required>
+                    </div>
+                    <div class="mb-3">
+                        <input type="password" name="new_password" class="form-control form-control-lg rounded-pill" placeholder="Nueva Contraseña" required>
+                    </div>
+                    <button type="submit" class="btn btn-light btn-lg rounded-pill w-100">Cambiar Contraseña</button>
+                </form>
+                {% else %}
+                <h1 class="mb-4 fw-bold" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">Recuperar Contraseña</h1>
+                <form method="POST">
+                    <div class="mb-3">
+                        <input type="email" name="email" class="form-control form-control-lg rounded-pill" placeholder="Correo Electrónico" required>
+                    </div>
+                    <button type="submit" class="btn btn-light btn-lg rounded-pill w-100">Enviar Código</button>
+                </form>
+                <p class="mt-3">
+                    <a href="{{ url_for('login') }}" class="text-white fw-bold">Volver al Login</a>
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
