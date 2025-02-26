@@ -1,22 +1,133 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
-import sqlite3
-from werkzeug.security import generate_password_hash, check_password_hash
-import smtplib
-from email.mime.text import MIMEText
-import random
-import string
 import os
 import json
-from werkzeug.utils import secure_filename
+import random
+import string
+import sqlite3
+from flask import Flask, render_template, request, redirect, url_for, session, flash
+from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename, quote
+import smtplib
+from email.mime.text import MIMEText
 
 app = Flask(__name__, template_folder='templates')
-app.secret_key = 'clave_secreta_compartida'
-DB_PATH = r"C:/Users/lelopez/Desktop/juego_derecho/casos.db"
-UPLOAD_FOLDER = r"C:/Users/lelopez/Desktop/juego_derecho/static/uploads"
+app.secret_key = os.environ.get('SECRET_KEY', 'una_clave_muy_segura_y_larga')  # Usar variable de entorno para seguridad
+DB_PATH = os.path.join(os.path.dirname(__file__), 'casos.db')
+UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'static', 'uploads')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-EMAIL_USER = "tu_email@gmail.com"
-EMAIL_PASSWORD = "tu_contraseña_de_app"
+# Configuración de email (ajusta estas variables en Render como variables de entorno)
+EMAIL_USER = os.environ.get('EMAIL_USER', 'tu_email@gmail.com')
+EMAIL_PASSWORD = os.environ.get('EMAIL_PASSWORD', 'tu_contraseña_de_app')
+
+# Función para conectar o crear la base de datos
+def connect_db():
+    db_path = os.path.join(os.path.dirname(__file__), 'casos.db')
+    if not os.path.exists(db_path):
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        # Crear tablas básicas si no existen
+        cursor.execute('''CREATE TABLE IF NOT EXISTS usuarios (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL,
+            password TEXT NOT NULL,
+            email TEXT NOT NULL,
+            real_name TEXT NOT NULL,
+            points INTEGER DEFAULT 0
+        )''')
+        cursor.execute('''CREATE TABLE IF NOT EXISTS juicios (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            tabla TEXT NOT NULL,
+            caso_id INTEGER NOT NULL,
+            fiscal_id INTEGER,
+            defensor_id INTEGER,
+            fiscal_alegato TEXT,
+            defensor_alegato TEXT,
+            estado TEXT DEFAULT 'pendiente',
+            fiscal_puntos INTEGER,
+            defensor_puntos INTEGER,
+            ganador_id INTEGER,
+            resultado TEXT
+        )''')
+        cursor.execute('''CREATE TABLE IF NOT EXISTS alegatos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            tabla TEXT NOT NULL,
+            caso_id INTEGER NOT NULL,
+            rol TEXT NOT NULL,
+            alegato TEXT NOT NULL,
+            puntos INTEGER NOT NULL,
+            fecha DATETIME DEFAULT CURRENT_TIMESTAMP
+        )''')
+        # Agrega más tablas si las tienes (casos_penales, casos_civil, etc.)
+        cursor.execute('''CREATE TABLE IF NOT EXISTS casos_penales (
+            id INTEGER PRIMARY KEY,
+            titulo TEXT NOT NULL,
+            hechos TEXT NOT NULL,
+            pruebas TEXT,
+            testigos TEXT,
+            defensa TEXT,
+            ley TEXT NOT NULL,
+            procedimiento TEXT,
+            dificultad INTEGER
+        )''')
+        cursor.execute('''CREATE TABLE IF NOT EXISTS casos_civil (
+            id INTEGER PRIMARY KEY,
+            titulo TEXT NOT NULL,
+            hechos TEXT NOT NULL,
+            pruebas TEXT,
+            testigos TEXT,
+            defensa TEXT,
+            ley TEXT NOT NULL,
+            procedimiento TEXT,
+            dificultad INTEGER
+        )''')
+        cursor.execute('''CREATE TABLE IF NOT EXISTS casos_tierras (
+            id INTEGER PRIMARY KEY,
+            titulo TEXT NOT NULL,
+            hechos TEXT NOT NULL,
+            pruebas TEXT,
+            testigos TEXT,
+            defensa TEXT,
+            ley TEXT NOT NULL,
+            procedimiento TEXT,
+            dificultad INTEGER
+        )''')
+        cursor.execute('''CREATE TABLE IF NOT EXISTS casos_administrativo (
+            id INTEGER PRIMARY KEY,
+            titulo TEXT NOT NULL,
+            hechos TEXT NOT NULL,
+            pruebas TEXT,
+            testigos TEXT,
+            defensa TEXT,
+            ley TEXT NOT NULL,
+            procedimiento TEXT,
+            dificultad INTEGER
+        )''')
+        cursor.execute('''CREATE TABLE IF NOT EXISTS casos_familia (
+            id INTEGER PRIMARY KEY,
+            titulo TEXT NOT NULL,
+            hechos TEXT NOT NULL,
+            pruebas TEXT,
+            testigos TEXT,
+            defensa TEXT,
+            ley TEXT NOT NULL,
+            procedimiento TEXT,
+            dificultad INTEGER
+        )''')
+        cursor.execute('''CREATE TABLE IF NOT EXISTS casos_ninos (
+            id INTEGER PRIMARY KEY,
+            titulo TEXT NOT NULL,
+            hechos TEXT NOT NULL,
+            pruebas TEXT,
+            testigos TEXT,
+            defensa TEXT,
+            ley TEXT NOT NULL,
+            procedimiento TEXT,
+            dificultad INTEGER
+        )''')
+        conn.commit()
+        conn.close()
+    return sqlite3.connect(db_path)
 
 # Funciones auxiliares
 def generate_recovery_code():
@@ -24,7 +135,7 @@ def generate_recovery_code():
 
 def get_user_info(user_id):
     try:
-        conn = sqlite3.connect(DB_PATH)
+        conn = connect_db()
         cursor = conn.cursor()
         cursor.execute("SELECT real_name, points, photo_path FROM usuarios WHERE id = ?", (user_id,))
         user = cursor.fetchone()
@@ -67,48 +178,48 @@ def evaluar_alegato(alegato, caso):
         puntos += 25
         retroalimentacion.append("+25 puntos: Mencionaste la ley aplicable correctamente.")
     else:
-        retroalimentacion.append("0 puntos: No mencionaste la ley aplicable (" + caso['ley'] + "). Es fundamental citar la normativa correspondiente.")
+        retroalimentacion.append("0 puntos: No mencionaste la ley aplicable (" + caso['ley'] + ").")
 
     pruebas = caso['pruebas']
     pruebas_mencionadas = sum(1 for prueba in pruebas.keys() if prueba.lower() in alegato)
     puntos_pruebas = min(pruebas_mencionadas * 5, 20)
     puntos += puntos_pruebas
     if pruebas_mencionadas > 0:
-        retroalimentacion.append(f"+{puntos_pruebas} puntos: Mencionaste {pruebas_mencionadas} de {len(pruebas)} pruebas disponibles.")
+        retroalimentacion.append(f"+{puntos_pruebas} puntos: Mencionaste {pruebas_mencionadas} de {len(pruebas)} pruebas.")
     else:
-        retroalimentacion.append("0 puntos: No mencionaste ninguna prueba. Debes usar las pruebas disponibles para respaldar tu alegato.")
+        retroalimentacion.append("0 puntos: No mencionaste ninguna prueba.")
 
     testigos = caso['testigos']
     testigos_mencionados = sum(1 for testigo in testigos.keys() if testigo.lower() in alegato)
     puntos_testigos = min(testigos_mencionados * 5, 20)
     puntos += puntos_testigos
     if testigos_mencionados > 0:
-        retroalimentacion.append(f"+{puntos_testigos} puntos: Mencionaste {testigos_mencionados} de {len(testigos)} testigos disponibles.")
+        retroalimentacion.append(f"+{puntos_testigos} puntos: Mencionaste {testigos_mencionados} de {len(testigos)} testigos.")
     else:
-        retroalimentacion.append("0 puntos: No mencionaste ningún testigo. Los testigos son clave para fortalecer tu argumento.")
+        retroalimentacion.append("0 puntos: No mencionaste ningún testigo.")
 
     palabras_solicitud = ["solicito", "pido", "requiero", "sentencia", "fallo"]
     if any(palabra in alegato for palabra in palabras_solicitud):
         puntos += 15
-        retroalimentacion.append("+15 puntos: Incluiste una solicitud clara en tu alegato.")
+        retroalimentacion.append("+15 puntos: Incluiste una solicitud clara.")
     else:
-        retroalimentacion.append("0 puntos: No hiciste una solicitud clara (ej. 'solicito', 'pido'). Debes especificar qué buscas.")
+        retroalimentacion.append("0 puntos: No hiciste una solicitud clara.")
 
     roles_validos = ["fiscal", "defensor", "abogado", "demandante", "demandado", "recurrente", "administración", "ministerio", "público"]
     if any(rol in alegato for rol in roles_validos):
         puntos += 20
-        retroalimentacion.append("+20 puntos: Mencionaste tu rol y el alegato parece coherente con él.")
+        retroalimentacion.append("+20 puntos: Mencionaste tu rol.")
     else:
-        retroalimentacion.append("0 puntos: No mencionaste tu rol. Es crucial identificar tu posición.")
+        retroalimentacion.append("0 puntos: No mencionaste tu rol.")
 
     if len(alegato.split()) < 20:
         puntos -= 10
-        retroalimentacion.append("-10 puntos: Alegato demasiado corto (< 20 palabras). Debes desarrollar más tus argumentos.")
+        retroalimentacion.append("-10 puntos: Alegato demasiado corto (< 20 palabras).")
     else:
         retroalimentacion.append("+0 puntos: Longitud adecuada (>= 20 palabras).")
 
     puntos = max(0, min(puntos, 100))
-    resultado = f"Puntuación total: {puntos}/100\n\nDetalles de la evaluación:\n" + "\n".join(retroalimentacion)
+    resultado = f"Puntuación total: {puntos}/100\n\nDetalles:\n" + "\n".join(retroalimentacion)
     return puntos, resultado
 
 # Rutas de autenticación
@@ -118,7 +229,7 @@ def login():
         username = request.form['username']
         password = request.form['password']
         try:
-            conn = sqlite3.connect(DB_PATH)
+            conn = connect_db()
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM usuarios WHERE username = ?", (username,))
             user = cursor.fetchone()
@@ -130,7 +241,11 @@ def login():
             else:
                 flash("Usuario o contraseña incorrectos")
         except sqlite3.Error as e:
+            print(f"Error en la base de datos: {e}")
             flash(f"Error en la base de datos: {e}")
+        except Exception as e:
+            print(f"Error inesperado: {e}")
+            flash(f"Error inesperado: {e}")
     return render_template('login.html')
 
 @app.route('/logout')
@@ -151,14 +266,14 @@ def register():
             flash("Faltan datos")
             return render_template('register.html'), 400
         try:
-            conn = sqlite3.connect(DB_PATH)
+            conn = connect_db()
             cursor = conn.cursor()
             cursor.execute("SELECT id FROM usuarios WHERE username = ? OR email = ?", (username, email))
             if cursor.fetchone():
                 conn.close()
                 flash("El usuario o correo ya están registrados")
                 return render_template('register.html'), 400
-            hashed_password = generate_password_hash(password)
+            hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
             cursor.execute("INSERT INTO usuarios (username, password, email, real_name, points) VALUES (?, ?, ?, ?, 0)", 
                            (username, hashed_password, email, real_name))
             conn.commit()
@@ -177,7 +292,7 @@ def recover():
         if 'email' in request.form:
             email = request.form['email']
             try:
-                conn = sqlite3.connect(DB_PATH)
+                conn = connect_db()
                 cursor = conn.cursor()
                 cursor.execute("SELECT id FROM usuarios WHERE email = ?", (email,))
                 user = cursor.fetchone()
@@ -208,9 +323,9 @@ def recover():
             new_password = request.form['new_password']
             if code == session.get('recovery_code'):
                 email = session.get('recovery_email')
-                hashed_password = generate_password_hash(new_password)
+                hashed_password = generate_password_hash(new_password, method='pbkdf2:sha256')
                 try:
-                    conn = sqlite3.connect(DB_PATH)
+                    conn = connect_db()
                     cursor = conn.cursor()
                     cursor.execute("UPDATE usuarios SET password = ? WHERE email = ?", (hashed_password, email))
                     conn.commit()
@@ -269,12 +384,10 @@ def lista_casos(tabla, template_name):
     if not user_info:
         return redirect(url_for('login'))
     try:
-        print(f"Intentando conectar a {DB_PATH} para {tabla}")
-        conn = sqlite3.connect(DB_PATH)
+        conn = connect_db()
         cursor = conn.cursor()
         cursor.execute(f"SELECT id, titulo, hechos, pruebas, testigos, defensa, ley, procedimiento, dificultad FROM {tabla}")
         casos_data = cursor.fetchall()
-        print(f"Tabla {tabla}: {len(casos_data)} casos encontrados: {casos_data}")
         casos = [dict(id=row[0], titulo=row[1], hechos=row[2], pruebas=json.loads(row[3]) if row[3] else {},
                       testigos=json.loads(row[4]) if row[4] else {}, defensa=row[5], ley=row[6], procedimiento=row[7],
                       dificultad=row[8] if row[8] is not None else 0)
@@ -282,7 +395,6 @@ def lista_casos(tabla, template_name):
         conn.close()
         if not casos_data:
             flash(f"No se encontraron casos en {tabla}")
-        print(f"Enviando {len(casos)} casos a {template_name}: {casos}")
         return render_template(template_name, casos=casos, user_info=user_info)
     except sqlite3.Error as e:
         flash(f"Error en la base de datos: {e}")
@@ -297,12 +409,10 @@ def caso(tabla, caso_id):
         return redirect(url_for('login'))
 
     try:
-        print(f"Intentando conectar a {DB_PATH} para caso {caso_id} en {tabla}")
-        conn = sqlite3.connect(DB_PATH)
+        conn = connect_db()
         cursor = conn.cursor()
         cursor.execute(f"SELECT id, titulo, hechos, pruebas, testigos, defensa, ley, procedimiento FROM {tabla} WHERE id = ?", (caso_id,))
         caso_data = cursor.fetchone()
-        print(f"Buscando caso {caso_id} en {tabla}: {'Encontrado' if caso_data else 'No encontrado'}, datos: {caso_data}")
         if not caso_data:
             conn.close()
             flash("Caso no encontrado")
@@ -344,7 +454,6 @@ def caso(tabla, caso_id):
             'casos_ninos': 'ninos'
         }
         endpoint = endpoint_map.get(tabla, 'inicio')
-        print(f"Enviando caso a casos.html: {caso}, endpoint: {endpoint}")
         return render_template('casos.html', caso=caso, user_info=user_info, resultado=resultado, tabla=tabla, endpoint=endpoint)
     except sqlite3.Error as e:
         flash(f"Error en la base de datos: {e}")
@@ -359,7 +468,7 @@ def caso_multi(tabla, caso_id):
         return redirect(url_for('login'))
 
     try:
-        conn = sqlite3.connect(DB_PATH)
+        conn = connect_db()
         cursor = conn.cursor()
         cursor.execute(f"SELECT id, titulo, hechos, pruebas, testigos, defensa, ley, procedimiento FROM {tabla} WHERE id = ?", (caso_id,))
         caso_data = cursor.fetchone()
@@ -379,7 +488,6 @@ def caso_multi(tabla, caso_id):
             'procedimiento': caso_data[7]
         }
 
-        # Mapeo dinámico de tabla a endpoint
         endpoint_map = {
             'casos_penales': 'penal',
             'casos_civil': 'civil',
@@ -390,7 +498,6 @@ def caso_multi(tabla, caso_id):
         }
         endpoint = endpoint_map.get(tabla, 'inicio')
 
-        # Mapeo de roles por materia
         roles_map = {
             'casos_penales': ('Fiscal', 'Abogado Defensor'),
             'casos_civil': ('Demandante', 'Demandado'),
@@ -401,13 +508,11 @@ def caso_multi(tabla, caso_id):
         }
         rol1, rol2 = roles_map.get(tabla, ('Jugador 1', 'Jugador 2'))
 
-        # Buscar un juicio pendiente o completado para este caso
         cursor.execute("SELECT id, fiscal_id, defensor_id, fiscal_alegato, defensor_alegato, estado, fiscal_puntos, defensor_puntos, ganador_id, resultado FROM juicios WHERE tabla = ? AND caso_id = ? ORDER BY id DESC LIMIT 1", (tabla, caso_id))
         juicio = cursor.fetchone()
 
         if request.method == 'GET':
             if not juicio or juicio[5] == 'completado':
-                # Crear un nuevo juicio si no hay uno pendiente o el último está completado
                 cursor.execute("INSERT INTO juicios (tabla, caso_id) VALUES (?, ?)", (tabla, caso_id))
                 juicio_id = cursor.lastrowid
                 conn.commit()
@@ -415,11 +520,10 @@ def caso_multi(tabla, caso_id):
             else:
                 juicio_id = juicio[0]
 
-            # Si el juicio está completado, mostrar resultado almacenado
             if juicio[5] == 'completado' and juicio[9]:
-                return render_template('casos_multi.html', caso=caso, user_info=user_info, resultado=juicio[9], juicio_id=juicio_id, fiscal_id=juicio[1], defensor_id=juicio[2], endpoint=endpoint, rol1=rol1, rol2=rol2)
+                resultado = juicio[9].replace('Oponente', get_user_info(juicio[1])['real_name'] if session['user_id'] == juicio[2] else get_user_info(juicio[2])['real_name'] if session['user_id'] == juicio[1] else 'Oponente')
+                return render_template('casos_multi.html', caso=caso, user_info=user_info, resultado=resultado, juicio_id=juicio_id, fiscal_id=juicio[1], defensor_id=juicio[2], endpoint=endpoint, rol1=rol1, rol2=rol2)
 
-            # Mostrar formulario con opción de rol disponible
             return render_template('casos_multi.html', caso=caso, user_info=user_info, juicio_id=juicio_id, fiscal_id=juicio[1], defensor_id=juicio[2], endpoint=endpoint, rol1=rol1, rol2=rol2)
 
         if request.method == 'POST':
@@ -431,7 +535,7 @@ def caso_multi(tabla, caso_id):
                 flash("Faltan datos en el formulario")
                 return render_template('casos_multi.html', caso=caso, user_info=user_info, juicio_id=juicio_id, fiscal_id=juicio[1] if juicio else None, defensor_id=juicio[2] if juicio else None, endpoint=endpoint, rol1=rol1, rol2=rol2)
 
-            cursor.execute("SELECT fiscal_id, defensor_id, fiscal_alegato, defensor_alegato, estado, resultado FROM juicios WHERE id = ?", (juicio_id,))
+            cursor.execute("SELECT fiscal_id, defensor_id, fiscal_alegato, defensor_alegato, estado FROM juicios WHERE id = ?", (juicio_id,))
             juicio = cursor.fetchone()
             if not juicio or juicio[4] != 'pendiente':
                 flash("El juicio no está disponible o ya fue completado")
@@ -449,18 +553,15 @@ def caso_multi(tabla, caso_id):
 
             conn.commit()
 
-            # Verificar si ambos jugadores han enviado su alegato
             cursor.execute("SELECT fiscal_id, defensor_id, fiscal_alegato, defensor_alegato FROM juicios WHERE id = ?", (juicio_id,))
             juicio_actualizado = cursor.fetchone()
-            if juicio_actualizado[2] and juicio_actualizado[3]:  # Ambos alegatos enviados
+            if juicio_actualizado[2] and juicio_actualizado[3]:
                 fiscal_puntos, fiscal_eval = evaluar_alegato(juicio_actualizado[2], caso)
                 defensor_puntos, defensor_eval = evaluar_alegato(juicio_actualizado[3], caso)
                 ganador_id = juicio_actualizado[0] if fiscal_puntos > defensor_puntos else juicio_actualizado[1]
-                resultado = f"Juicio Completado\n{rol1} ({user_info['real_name'] if session['user_id'] == juicio_actualizado[0] else 'Oponente'}): {fiscal_puntos}/100\n{fiscal_eval}\n\n{rol2} ({user_info['real_name'] if session['user_id'] == juicio_actualizado[1] else 'Oponente'}): {defensor_puntos}/100\n{defensor_eval}\n\nGanador: {rol1 if fiscal_puntos > defensor_puntos else rol2}"
+                resultado = f"Juicio Completado\n{rol1} ({get_user_info(juicio_actualizado[0])['real_name'] if juicio_actualizado[0] else 'Oponente'}): {fiscal_puntos}/100\n{fiscal_eval}\n\n{rol2} ({get_user_info(juicio_actualizado[1])['real_name'] if juicio_actualizado[1] else 'Oponente'}): {defensor_puntos}/100\n{defensor_eval}\n\nGanador: {rol1 if fiscal_puntos > defensor_puntos else rol2}"
                 cursor.execute("UPDATE juicios SET fiscal_puntos = ?, defensor_puntos = ?, estado = 'completado', ganador_id = ?, resultado = ? WHERE id = ?",
                                (fiscal_puntos, defensor_puntos, ganador_id, resultado, juicio_id))
-                
-                # Actualizar puntos de los usuarios
                 cursor.execute("UPDATE usuarios SET points = points + ? WHERE id = ?", (fiscal_puntos, juicio_actualizado[0]))
                 cursor.execute("UPDATE usuarios SET points = points + ? WHERE id = ?", (defensor_puntos, juicio_actualizado[1]))
                 cursor.execute("INSERT INTO alegatos (user_id, tabla, caso_id, rol, alegato, puntos) VALUES (?, ?, ?, ?, ?, ?)",
@@ -468,7 +569,6 @@ def caso_multi(tabla, caso_id):
                 cursor.execute("INSERT INTO alegatos (user_id, tabla, caso_id, rol, alegato, puntos) VALUES (?, ?, ?, ?, ?, ?)",
                                (juicio_actualizado[1], tabla, caso_id, rol2, juicio_actualizado[3], defensor_puntos))
                 conn.commit()
-
             else:
                 resultado = "Esperando al oponente para completar el juicio..."
 
@@ -488,7 +588,7 @@ def perfil():
         return redirect(url_for('login'))
 
     try:
-        conn = sqlite3.connect(DB_PATH)
+        conn = connect_db()
         cursor = conn.cursor()
         
         cursor.execute("SELECT COUNT(*), AVG(puntos) FROM alegatos WHERE user_id = ?", (session['user_id'],))
@@ -529,4 +629,5 @@ if __name__ == '__main__':
     if not os.path.exists(UPLOAD_FOLDER):
         os.makedirs(UPLOAD_FOLDER)
     print(f"Usando base de datos en: {DB_PATH}")
-    app.run(debug=True, port=5003)
+    port = int(os.environ.get('PORT', 5003))  # Puerto dinámico para Render
+    app.run(host='0.0.0.0', port=port, debug=True)
