@@ -11,7 +11,7 @@ from email.mime.text import MIMEText
 
 app = Flask(__name__, template_folder='templates')
 app.secret_key = os.environ.get('SECRET_KEY', 'una_clave_muy_segura_y_larga')  # Usar variable de entorno para seguridad
-DB_PATH = os.path.join(os.path.dirname(__file__), 'casos.db')
+DB_PATH = os.path.join('/data', 'casos.db')  # Cambiado a la ruta del Persistent Disk
 UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'static', 'uploads')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
@@ -21,7 +21,7 @@ EMAIL_PASSWORD = os.environ.get('EMAIL_PASSWORD', 'tu_contraseña_de_app')
 
 # Función para conectar o crear la base de datos
 def connect_db():
-    db_path = os.path.join(os.path.dirname(__file__), 'casos.db')
+    db_path = os.path.join('/data', 'casos.db')  # Usar la ruta del Persistent Disk
     if not os.path.exists(db_path):
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
