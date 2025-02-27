@@ -2,7 +2,7 @@ import sqlite3
 import json
 
 # Conectar a la base de datos local
-db_path = 'C:/Users/lelopez/Desktop/juego_derecho/casos.db'
+db_path = 'C:/Users/lelopez/Documents/derecho2/juego_derecho/casos.db'
 conn = sqlite3.connect(db_path)
 cursor = conn.cursor()
 
