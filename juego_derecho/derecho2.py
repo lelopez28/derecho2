@@ -137,7 +137,7 @@ def get_user_info(user_id):
     try:
         conn = connect_db()
         cursor = conn.cursor()
-        cursor.execute("SELECT real_name, points, photo_path FROM usuarios WHERE id = ?", (user_id,))
+        cursor.execute("SELECT real_name, points FROM usuarios WHERE id = ?", (user_id,))
         user = cursor.fetchone()
         conn.close()
         if user:
@@ -152,7 +152,7 @@ def get_user_info(user_id):
                 rank = "Fiscal Experto"
             else:
                 rank = "Maestro del Derecho"
-            return {"real_name": user[0], "points": points, "photo_path": user[2], "rank": rank}
+            return {"real_name": user[0], "points": points, "rank": rank}  # Eliminado photo_path
         print(f"No se encontró usuario con id {user_id}")
         return None
     except sqlite3.Error as e:
