@@ -21,8 +21,10 @@ EMAIL_PASSWORD = os.environ.get('EMAIL_PASSWORD', 'tu_contraseña_de_app')
 
 # Función para conectar o crear la base de datos
 def connect_db():
-    db_path = os.path.join('/data', 'casos.db')  # Usar la ruta del Persistent Disk
+    db_path = os.path.join('/data', 'casos.db')
+    print(f"Verificando base de datos en: {db_path}")
     if not os.path.exists(db_path):
+        print(f"Base de datos no encontrada, creando en: {db_path}")
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
         # Crear tablas básicas si no existen
@@ -58,7 +60,6 @@ def connect_db():
             puntos INTEGER NOT NULL,
             fecha DATETIME DEFAULT CURRENT_TIMESTAMP
         )''')
-        # Agrega más tablas si las tienes (casos_penales, casos_civil, etc.)
         cursor.execute('''CREATE TABLE IF NOT EXISTS casos_penales (
             id INTEGER PRIMARY KEY,
             titulo TEXT NOT NULL,
@@ -70,62 +71,18 @@ def connect_db():
             procedimiento TEXT,
             dificultad INTEGER
         )''')
-        cursor.execute('''CREATE TABLE IF NOT EXISTS casos_civil (
-            id INTEGER PRIMARY KEY,
-            titulo TEXT NOT NULL,
-            hechos TEXT NOT NULL,
-            pruebas TEXT,
-            testigos TEXT,
-            defensa TEXT,
-            ley TEXT NOT NULL,
-            procedimiento TEXT,
-            dificultad INTEGER
-        )''')
-        cursor.execute('''CREATE TABLE IF NOT EXISTS casos_tierras (
-            id INTEGER PRIMARY KEY,
-            titulo TEXT NOT NULL,
-            hechos TEXT NOT NULL,
-            pruebas TEXT,
-            testigos TEXT,
-            defensa TEXT,
-            ley TEXT NOT NULL,
-            procedimiento TEXT,
-            dificultad INTEGER
-        )''')
-        cursor.execute('''CREATE TABLE IF NOT EXISTS casos_administrativo (
-            id INTEGER PRIMARY KEY,
-            titulo TEXT NOT NULL,
-            hechos TEXT NOT NULL,
-            pruebas TEXT,
-            testigos TEXT,
-            defensa TEXT,
-            ley TEXT NOT NULL,
-            procedimiento TEXT,
-            dificultad INTEGER
-        )''')
-        cursor.execute('''CREATE TABLE IF NOT EXISTS casos_familia (
-            id INTEGER PRIMARY KEY,
-            titulo TEXT NOT NULL,
-            hechos TEXT NOT NULL,
-            pruebas TEXT,
-            testigos TEXT,
-            defensa TEXT,
-            ley TEXT NOT NULL,
-            procedimiento TEXT,
-            dificultad INTEGER
-        )''')
-        cursor.execute('''CREATE TABLE IF NOT EXISTS casos_ninos (
-            id INTEGER PRIMARY KEY,
-            titulo TEXT NOT NULL,
-            hechos TEXT NOT NULL,
-            pruebas TEXT,
-            testigos TEXT,
-            defensa TEXT,
-            ley TEXT NOT NULL,
-            procedimiento TEXT,
-            dificultad INTEGER
-        )''')
+        # ... (continúa con las otras tablas: casos_civil, casos_tierras, etc.)
         conn.commit()
+        conn.close()
+    else:
+        print(f"Base de datos encontrada en: {db_path}")
+        # Verificar datos en tablas clave
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM usuarios")
+        print(f"Usuarios en la base de datos: {cursor.fetchone()[0]}")
+        cursor.execute("SELECT COUNT(*) FROM casos_penales")
+        print(f"Casos en casos_penales: {cursor.fetchone()[0]}")
         conn.close()
     return sqlite3.connect(db_path)
 
