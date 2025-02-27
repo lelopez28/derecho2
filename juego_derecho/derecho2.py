@@ -23,11 +23,23 @@ EMAIL_PASSWORD = os.environ.get('EMAIL_PASSWORD', 'tu_contraseña_de_app')
 def connect_db():
     db_path = os.path.join('/data', 'casos.db')
     print(f"Verificando base de datos en: {db_path}")
-    if not os.path.exists(db_path):
-        print(f"Base de datos no encontrada, creando en: {db_path}")
-        conn = sqlite3.connect(db_path)
-        cursor = conn.cursor()
-        # Crear tablas básicas si no existen
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    
+    # Verificar si las tablas existen y si están vacías
+    tablas = ['usuarios', 'juicios', 'alegatos', 'casos_penales', 'casos_civil', 'casos_tierras', 
+              'casos_administrativo', 'casos_familia', 'casos_ninos']
+    crear_tablas = False
+    
+    for tabla in tablas:
+        cursor.execute(f"SELECT count(name) FROM sqlite_master WHERE type='table' AND name='{tabla}'")
+        if cursor.fetchone()[0] == 0:
+            crear_tablas = True
+            break
+    
+    if crear_tablas:
+        print(f"Alguna tabla no existe, creando todas las tablas en: {db_path}")
+        # Crear todas las tablas si alguna falta
         cursor.execute('''CREATE TABLE IF NOT EXISTS usuarios (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT NOT NULL,
@@ -71,19 +83,23 @@ def connect_db():
             procedimiento TEXT,
             dificultad INTEGER
         )''')
-        # ... (continúa con las otras tablas: casos_civil, casos_tierras, etc.)
-        conn.commit()
-        conn.close()
+        # ... (continúa con las otras tablas como en tu código original)
     else:
-        print(f"Base de datos encontrada en: {db_path}")
-        # Verificar datos en tablas clave
-        conn = sqlite3.connect(db_path)
-        cursor = conn.cursor()
+        print(f"Tablas existentes en: {db_path}, verificando datos...")
+        # Verificar si hay datos en las tablas clave
         cursor.execute("SELECT COUNT(*) FROM usuarios")
-        print(f"Usuarios en la base de datos: {cursor.fetchone()[0]}")
+        usuarios_count = cursor.fetchone()[0]
+        print(f"Usuarios en la base de datos: {usuarios_count}")
         cursor.execute("SELECT COUNT(*) FROM casos_penales")
-        print(f"Casos en casos_penales: {cursor.fetchone()[0]}")
-        conn.close()
+        casos_penales_count = cursor.fetchone()[0]
+        print(f"Casos en casos_penales: {casos_penales_count}")
+        # Opcional: Inspeccionar más tablas si es necesario
+        cursor.execute("SELECT COUNT(*) FROM casos_civil")
+        print(f"Casos en casos_civil: {cursor.fetchone()[0]}")
+        cursor.execute("SELECT COUNT(*) FROM juicios")
+        print(f"Juicios en la base de datos: {cursor.fetchone()[0]}")
+    
+    conn.close()
     return sqlite3.connect(db_path)
 
 # Funciones auxiliares
