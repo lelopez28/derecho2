@@ -83,7 +83,61 @@ def connect_db():
             procedimiento TEXT,
             dificultad INTEGER
         )''')
-        # ... (continúa con las otras tablas como en tu código original)
+        cursor.execute('''CREATE TABLE IF NOT EXISTS casos_civil (
+            id INTEGER PRIMARY KEY,
+            titulo TEXT NOT NULL,
+            hechos TEXT NOT NULL,
+            pruebas TEXT,
+            testigos TEXT,
+            defensa TEXT,
+            ley TEXT NOT NULL,
+            procedimiento TEXT,
+            dificultad INTEGER
+        )''')
+        cursor.execute('''CREATE TABLE IF NOT EXISTS casos_tierras (
+            id INTEGER PRIMARY KEY,
+            titulo TEXT NOT NULL,
+            hechos TEXT NOT NULL,
+            pruebas TEXT,
+            testigos TEXT,
+            defensa TEXT,
+            ley TEXT NOT NULL,
+            procedimiento TEXT,
+            dificultad INTEGER
+        )''')
+        cursor.execute('''CREATE TABLE IF NOT EXISTS casos_administrativo (
+            id INTEGER PRIMARY KEY,
+            titulo TEXT NOT NULL,
+            hechos TEXT NOT NULL,
+            pruebas TEXT,
+            testigos TEXT,
+            defensa TEXT,
+            ley TEXT NOT NULL,
+            procedimiento TEXT,
+            dificultad INTEGER
+        )''')
+        cursor.execute('''CREATE TABLE IF NOT EXISTS casos_familia (
+            id INTEGER PRIMARY KEY,
+            titulo TEXT NOT NULL,
+            hechos TEXT NOT NULL,
+            pruebas TEXT,
+            testigos TEXT,
+            defensa TEXT,
+            ley TEXT NOT NULL,
+            procedimiento TEXT,
+            dificultad INTEGER
+        )''')
+        cursor.execute('''CREATE TABLE IF NOT EXISTS casos_ninos (
+            id INTEGER PRIMARY KEY,
+            titulo TEXT NOT NULL,
+            hechos TEXT NOT NULL,
+            pruebas TEXT,
+            testigos TEXT,
+            defensa TEXT,
+            ley TEXT NOT NULL,
+            procedimiento TEXT,
+            dificultad INTEGER
+        )''')
     else:
         print(f"Tablas existentes en: {db_path}, verificando datos...")
         # Verificar si hay datos en las tablas clave
